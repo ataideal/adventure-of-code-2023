@@ -8,9 +8,6 @@ defmodule GearRatios do
     numbers_indexes = Enum.map(file, fn line -> Regex.scan(~r/\d+/, line,  return: :index) end)
     symbols_indexes = Enum.map(file, fn line -> Regex.scan(~r/[^\d.]+/, line,  return: :index) end)
 
-    dbg(numbers_indexes)
-    dbg(symbols_indexes)
-
     numbers_indexes
     |> Enum.with_index()
     |> Enum.map(fn {indexes, number_line} ->
@@ -26,11 +23,9 @@ defmodule GearRatios do
       Enum.reduce(numbers_adjacents, 0, fn {start_n, end_n} , acc ->
         line
         |> String.slice(start_n, end_n)
-        |> IO.inspect()
         |> String.to_integer()
         |> Kernel.+(acc)
       end)
-      |> IO.inspect()
       |> Kernel.+(line_acc)
     end)
   end
