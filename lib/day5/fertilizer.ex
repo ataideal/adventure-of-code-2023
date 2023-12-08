@@ -24,21 +24,21 @@ defmodule Fertilizer do
   @max_size 8
   def solve2 do
     start = NaiveDateTime.utc_now()
-    map =
-      Helper.read_file!("5-input.txt")
-      |> String.split("\n")
-      |> parse_input(0, List.first(@maps), %{}, true)
-      |> Map.get_and_update("seeds", fn seeds ->
-        new_seeds =
-          seeds
-          |> Enum.chunk_every(2)
-
-        {seeds, new_seeds}
-      end)
-      |> elem(1)
-
     IO.inspect(start, label: :start)
-    find_location_path(map, 0, List.first(@inverse_maps), [])
+
+    Helper.read_file!("5-input.txt")
+    |> String.split("\n")
+    |> parse_input(0, List.first(@maps), %{}, true)
+    |> Map.get_and_update("seeds", fn seeds ->
+      new_seeds =
+        seeds
+        |> Enum.chunk_every(2)
+
+      {seeds, new_seeds}
+    end)
+    |> elem(1)
+    |> find_location_path(0, List.first(@inverse_maps), [])
+
     IO.inspect(NaiveDateTime.utc_now(), label: :finish)
   end
 
@@ -55,36 +55,29 @@ defmodule Fertilizer do
   end
 
   defp find_location_path(map, current_number, "humidity-to-location" = current_map, current_list) do
-    match_for_next_map =
-      Enum.find_value(map[current_map], fn [drs, srs, size] ->
-        if current_number >= drs && current_number <= drs+size-1 do
-          current_number - drs + srs
-        end
-      end)
-    if match_for_next_map do
-      find_location_path(map, match_for_next_map, next_inverse_map(current_map), [current_number | current_list])
-    else
-      find_location_path(map, current_number, next_inverse_map(current_map), [current_number | current_list])
-    end
+    Enum.find_value(map[current_map], fn [drs, srs, size] ->
+      if current_number >= drs && current_number <= drs+size-1 do
+        current_number - drs + srs
+      end
+    end)
+    |> find_next_location_path(map, current_number, current_map, current_list)
     |> case do
-      list when length(list) == @max_size -> list
-      _ -> find_location_path(map, current_number + 1, current_map, current_list)
+      list when length(list) == @max_size -> list ## Stop condition
+      _ -> find_location_path(map, current_number + 1, current_map, current_list) ## Incrementing
     end
   end
 
   defp find_location_path(map, current_number, current_map, current_list) do
-    match_for_next_map =
-      Enum.find_value(map[current_map], fn [drs, srs, size] ->
-        if current_number >= drs && current_number <= drs+size-1 do
-          current_number - drs + srs
-        end
-      end)
-    if match_for_next_map do
-      find_location_path(map, match_for_next_map, next_inverse_map(current_map), [current_number | current_list])
-    else
-      find_location_path(map, current_number, next_inverse_map(current_map), [current_number | current_list])
-    end
+    Enum.find_value(map[current_map], fn [drs, srs, size] ->
+      if current_number >= drs && current_number <= drs+size-1 do
+        current_number - drs + srs
+      end
+    end)
+    |> find_next_location_path(map, current_number, current_map, current_list)
   end
+
+  defp find_next_location_path(nil, map, current_number, current_map, current_list), do: find_location_path(map, current_number, next_inverse_map(current_map), [current_number | current_list])
+  defp find_next_location_path(next_map_value, map, current_number, current_map, current_list), do: find_location_path(map, next_map_value, next_inverse_map(current_map), [current_number | current_list])
 
   defp find_seed_path(map) do
     Enum.map(map["seeds"], fn seed ->
